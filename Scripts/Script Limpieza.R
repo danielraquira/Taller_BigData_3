@@ -144,3 +144,40 @@ leaflet() %>% addTiles() %>%
 
 ### Ahora estaciones de buses ###
 
+osm4 = opq(bbox = getbb("Medellín Colombia")) %>%
+  add_osm_feature(key="amenity" , value="bus_station") 
+class(osm4)
+
+## extraer Simple Features Collection
+osm_sf4 = osm4 %>% osmdata_sf()
+osm_sf4
+
+estaciones_de_busM = osm_sf4$osm_points %>% select(osm_id,amenity) 
+estaciones_de_busM
+
+leaflet() %>% addTiles() %>% addCircleMarkers(data=estaciones_de_busM , col="red") %>% 
+  addCircleMarkers(data=train_med, col="blue")
+
+#### distancia buses ####
+distancia_bus = st_distance(x=train_med , y=estaciones_de_busM)
+
+min_distancia_bus = apply(distancia_bus , 1 , min)
+
+train_med$min_distancia_bus<-min_distancia_bus
+
+
+leaflet() %>% addTiles() %>% 
+  addCircles(data=train_med , col="red" , weight=2) %>% 
+  addCircles(data=estaciones_de_busM , col="black" , weight=2)
+
+## Creación test conjunta
+
+test_final<-rbind(test_bog,test_med) ### revision
+
+
+##### Predicción en areas según vecinos cercanos
+path = here('')
+## Primero Bogota
+
+mzbog<-st_read(here(path,"11_BOGOTA/URBANO/MGN_URB_MANZANA.shp"))
+######## este es el que no me sale
