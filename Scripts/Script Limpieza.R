@@ -47,7 +47,6 @@ train %>%
     totalN = (cumsum(n)),
     percent = round((n / sum(n)), 3),
     cumuPer = round(cumsum(freq = n / sum(n)), 3)) 
-<<<<<<< HEAD
 
 test %>%
   group_by(city) %>%
@@ -67,7 +66,7 @@ leaflet() %>% addTiles() %>% addCircles(data=point)
 leaflet() %>% addTiles() %>% addCircles(data=train_bog)
 
 ##Supermercados##
-osm = opq(bbox = getbb("Bogot? Colombia")) %>%
+osm = opq(bbox = getbb("Bogotá Colombia")) %>%
   add_osm_feature(key="amenity" , value="marketplace") 
 class(osm)
 
@@ -77,38 +76,18 @@ osm_sf
 
 marketplace = osm_sf$osm_points %>% select(osm_id,amenity) 
 marketplace
+## Distancias ##
+dist_market = st_distance(x=train_bog , y=marketplace)
+dist_market
+min_dist_market = apply(dist_market , 1 , min)
+min_dist_market
+train_bog$min_dist_market<-min_dist_market
 
-leaflet() %>% addTiles() %>% addCircleMarkers(data=marketplace , col="blue")
-=======
->>>>>>> cd9332cac699c9f94e4e2d347e12766758529ea2
+leaflet() %>% addTiles() %>% 
+  addCircles(data=marketplace , col="black" , weight=2)%>% 
+  addCircles(data=train_bog , col="black" , weight=2)
 
-test %>%
-  group_by(city) %>%
-  summarise(n = n()) %>%
-  mutate(
-    totalN = (cumsum(n)),
-    percent = round((n / sum(n)), 3),
-    cumuPer = round(cumsum(freq = n / sum(n)), 3)) 
+## Ahora con paraderos de bus ##
 
-## Separamos de la base train Bogotá y Medellín ##
-train_bog<-subset(train,city %in% c("Bogotá D.C"))
-train_med<-subset(train,city %in% c("Medellín"))
 
-## Empezamos con Bogotá ##
-point = geocode_OSM(paste(train$lat[1]," , ",train$lon[1]), as.sf=T) 
-leaflet() %>% addTiles() %>% addCircles(data=point)
-leaflet() %>% addTiles() %>% addCircles(data=train_bog)
 
-##Supermercados##
-osm = opq(bbox = getbb("Bogot? Colombia")) %>%
-  add_osm_feature(key="amenity" , value="marketplace") 
-class(osm)
-
-## extraer Simple Features Collection
-osm_sf = osm %>% osmdata_sf()
-osm_sf
-
-marketplace = osm_sf$osm_points %>% select(osm_id,amenity) 
-marketplace
-
-leaflet() %>% addTiles() %>% addCircleMarkers(data=marketplace , col="blue")
