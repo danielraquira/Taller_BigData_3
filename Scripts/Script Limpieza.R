@@ -40,7 +40,7 @@ train<-st_as_sf(train,coords=c('longb','latb'),crs="WGS84") #crs utilizado por g
 test<-test %>% mutate(latb=lat,longb=lon)
 test<-st_as_sf(test,coords=c('longb','latb'),crs="WGS84")
 
-##Revisamos la variable city que e sla que nos interesa ##
+##Revisamos la variable city que es la que nos interesa ##
 train %>%
   group_by(city) %>%
   summarise(n = n()) %>%
@@ -286,7 +286,7 @@ table(is.na(train_bog$property_type))
 
 ##Prediccion si tiene balcon / terraza
 p1 = "balcon" ## pattern
-p2 = "balcon" ## pattern
+p2 = "balcón" ## pattern
 p3 = "terraza" ## pattern
 
 train_bog$balcon<-NULL
@@ -364,7 +364,7 @@ table(is.na(train_med$property_type))
 
 ##Prediccion si tiene balcon / terraza
 p1 = "balcon" ## pattern
-p2 = "balcon" ## pattern
+p2 = "balcón" ## pattern
 p3 = "terraza" ## pattern
 
 train_med$balcon<-NULL
@@ -388,3 +388,100 @@ train_med <- train_med %>%
 
 ## Predicción para Cali / test ##
 
+#A partir de descripción
+table(is.na(test$surface_total))
+table(is.na(test$surface_covered))
+test$new_surface<-NULL
+test = test %>% mutate(new_surface=surface_total)
+table(is.na(test$new_surface))
+test = test %>% mutate(new_surface=ifelse(is.na(new_surface)==T,surface_covered,new_surface))
+table(is.na(test$new_surface))
+
+
+test = test %>% mutate(new_desc=str_to_lower(description))
+
+
+p1 = "[:space:]+[:digit:]{2,3}+[:punct:]+[:digit:]{1,2}+[:space:]+m" 
+p2 = "[:space:]+[:digit:]{2,3}+[:punct:]+[:digit:]{1,2}+[:space:]+m2" 
+
+test$new_surface2<-NA
+
+test = test %>% 
+  mutate(new_surface2 = str_extract(string=test$new_desc , pattern= p1))
+test = test %>% 
+  mutate(new_surface2 = ifelse(is.na(new_surface2)==T,
+                               str_extract(string=test$new_desc , pattern= p2),
+                               new_surface2))
+test$new_surface3<-NA
+
+test = test %>% 
+  mutate(new_surface3 = str_extract(string=test$new_surface2 , pattern= "[:digit:]{2,3}"))
+test$new_surface3 <- as.numeric(test$new_surface3)
+test = test %>% mutate(new_surface3 = ifelse(new_surface3<=40,NA,new_surface3))
+
+test = test %>% mutate(new_surface = ifelse(is.na(new_surface)==T,new_surface3,new_surface))
+table(is.na(test$new_surface))
+
+
+## make buffer
+house_buf<-NULL
+house_buf_mean<-NULL
+house_buf = st_buffer(test,dist=100)
+house_buf = st_join(house_buf,test[,"new_surface"])
+st_geometry(house_buf) = NULL
+house_buf_mean = house_buf %>% group_by(property_id) %>% summarise(surface_new_3=mean(new_surface.y,na.rm=T))
+test = left_join(test,house_buf_mean,"property_id")
+
+test = test %>% mutate(new_surface = ifelse(is.na(new_surface)==T,test$surface_new_3,new_surface))
+table(is.na(test$new_surface))
+
+test = test %>% mutate(new_surface = ifelse(is.na(new_surface)==T,mean(test[is.na(test$new_surface)==F,]$new_surface),new_surface))
+table(is.na(test$new_surface))
+table(is.na(test$property_type))
+
+
+##Prediccion si tiene balcon / terraza
+p1 = "balcon" ## pattern
+p2 = "balcón" ## pattern
+p3 = "terraza" ## pattern
+
+test$balcon<-NULL
+
+test = test %>% 
+  mutate(balcon = str_extract(string=test$new_desc , pattern= p1))
+test = test %>% 
+  mutate(balcon = ifelse(is.na(balcon)==T,
+                         str_extract(string=test$new_desc , pattern= p2),balcon))
+test = test %>% 
+  mutate(balcon = ifelse(is.na(balcon)==T,
+                         str_extract(string=test$new_desc , pattern= p3),balcon))
+
+test = test %>% mutate(balcon_terr = ifelse(is.na(balcon)==T, 0 ,1))
+
+test <- test %>%
+  mutate_at(.vars = c(
+    "balcon_terr"),
+    .funs = factor)
+
+## Revisamos NA´s ##
+table(is.na(test$new_surface))
+table(is.na(test$bedrooms))
+table(is.na(test$min_dist_bus))
+table(is.na(test$min_dist_market))
+table(is.na(test$property_type))
+table(is.na(train_bog$new_surface))
+table(is.na(train_bog$bedrooms))
+table(is.na(train_bog$min_dist_bus))
+table(is.na(train_bog$min_dist_market))
+table(is.na(train_bog$property_type))
+table(is.na(train_bog$price))
+table(is.na(train_med$new_surface))
+table(is.na(train_med$bedrooms))
+table(is.na(train_med$min_dist_bus))
+table(is.na(train_med$min_dist_market))
+table(is.na(train_med$property_type))
+table(is.na(train_med$price))
+
+train_final <- rbind(train_bog, train_med)
+
+save(train_bog, train_med, train_final, test, file = "datos_limpios.RData")
