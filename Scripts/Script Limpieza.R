@@ -35,6 +35,7 @@ test <- test %>%
     .funs = factor)
 
 ## Datos espaciales ##
+
 train<-train %>% mutate(latb=lat,longb=lon)
 train<-st_as_sf(train,coords=c('longb','latb'),crs="WGS84") #crs utilizado por google earth
 test<-test %>% mutate(latb=lat,longb=lon)
@@ -62,6 +63,7 @@ train_bog<-subset(train,city %in% c("Bogotá D.C"))
 train_med<-subset(train,city %in% c("Medellín"))
 
 ################# Empezamos con Bogotá #####################
+
 point = geocode_OSM(paste(train$lat[1]," , ",train$lon[1]), as.sf=T) 
 leaflet() %>% addTiles() %>% addCircles(data=point)
 leaflet() %>% addTiles() %>% addCircles(data=train_bog)
@@ -90,14 +92,14 @@ leaflet() %>% addTiles() %>%
 
 ## Ahora con estaciones de bus ##
 
-osm2 = opq(bbox = getbb("Bogotá Colombia")) %>%
+osm = opq(bbox = getbb("Bogotá Colombia")) %>%
   add_osm_feature(key="amenity" , value="bus_station") 
-class(osm2)
+class(osm)
 
-osm_sf2 = osm2 %>% osmdata_sf()
-osm_sf2
+osm_sf = osm %>% osmdata_sf()
+osm_sf
 
-estaciones_de_bus = osm_sf2$osm_points %>% select(osm_id,amenity) 
+estaciones_de_bus = osm_sf$osm_points %>% select(osm_id,amenity) 
 estaciones_de_bus
 
 leaflet() %>% addTiles() %>% addCircleMarkers(data=estaciones_de_bus , col="red") %>% 
@@ -115,18 +117,88 @@ leaflet() %>% addTiles() %>%
   addCircles(data=point , col="red" , weight=2) %>% 
   addCircles(data=estaciones_de_bus , col="black" , weight=2) 
 
+#### Estaciones de policia ####
+osm = opq(bbox = getbb("Bogotá Colombia")) %>%
+  add_osm_feature(key="amenity" , value="police") 
+class(osm)
+
+## extraer Simple Features Collection
+osm_sf = osm  %>% osmdata_sf()
+osm_sf
+
+estaciones_policia_bog = osm_sf$osm_points %>% select(osm_id,amenity) 
+estaciones_policia_bog
+
+### Distancias estaciones de policia ##
+dist_policiasb = st_distance(x=train_bog , y=estaciones_policia_bog)
+dist_policiasb
+min_dist_policiasb = apply(dist_policiasb , 1 , min)
+min_dist_policiasb
+train_bog$min_dist_policiasb<-min_dist_policiasb
+
+leaflet() %>% addTiles() %>% 
+  addCircles(data=estaciones_policia_bog , col="black" , weight=2)%>% 
+  addCircles(data=train_bog , col="black" , weight=2)
+
+#### Oficinas en Bogotá ####
+osm = opq(bbox = getbb("Bogotá Colombia")) %>%
+  add_osm_feature(key="building" , value="office") 
+class(osm)
+
+## extraer Simple Features Collection
+osm_sf = osm  %>% osmdata_sf()
+osm_sf
+
+oficinas_bog = osm_sf$osm_points %>% select(osm_id,building) 
+oficinas_bog
+
+### Distancias oficinas en Bogota ##
+dist_oficinasb = st_distance(x=train_bog , y=oficinas_bog)
+dist_oficinasb
+min_dist_oficinasb = apply(dist_oficinasb , 1 , min)
+min_dist_oficinasb
+train_bog$min_dist_oficinasb<-min_dist_oficinasb
+
+leaflet() %>% addTiles() %>% 
+  addCircles(data=oficinas_bog , col="black" , weight=2)%>% 
+  addCircles(data=train_bog , col="black" , weight=2)
+
+#### colegios en Bogotá ####
+osm = opq(bbox = getbb("Bogotá Colombia")) %>%
+  add_osm_feature(key="amenity" , value="school") 
+class(osm)
+
+## extraer Simple Features Collection
+osm_sf = osm  %>% osmdata_sf()
+osm_sf
+
+colegios_bog = osm_sf$osm_points %>% select(osm_id,amenity) 
+colegios_bog
+
+### Distancias oficinas en Bogota ##
+dist_colegiosb = st_distance(x=train_bog , y=colegios_bog)
+dist_colegiosb
+min_dist_colegiosb = apply(dist_colegiosb , 1 , min)
+min_dist_colegiosb
+train_bog$min_dist_colegiosb<-min_dist_colegiosb
+
+leaflet() %>% addTiles() %>% 
+  addCircles(data=colegios_bog , col="black" , weight=2)%>% 
+  addCircles(data=colegios_bog , col="black" , weight=2)
+
+
 ################# Seguimos con Medellín #####################
 
 #### Super mercados ####
-osm3 = opq(bbox = getbb("Medellín Colombia")) %>%
+osm = opq(bbox = getbb("Medellín Colombia")) %>%
   add_osm_feature(key="amenity" , value="marketplace") 
-class(osm3)
+class(osm)
 
 ## extraer Simple Features Collection
-osm_sf3 = osm3 %>% osmdata_sf()
-osm_sf3
+osm_sf = osm %>% osmdata_sf()
+osm_sf
 
-marketplace = osm_sf3$osm_points %>% select(osm_id,amenity) 
+marketplace = osm_sf$osm_points %>% select(osm_id,amenity) 
 marketplace
 
 leaflet() %>% addTiles() %>% addCircleMarkers(data=marketplace , col="blue")
@@ -145,15 +217,15 @@ leaflet() %>% addTiles() %>%
 
 ### Ahora estaciones de buses ###
 
-osm4 = opq(bbox = getbb("Medellín Colombia")) %>%
+osm = opq(bbox = getbb("Medellín Colombia")) %>%
   add_osm_feature(key="amenity" , value="bus_station") 
-class(osm4)
+class(osm)
 
 ## extraer Simple Features Collection
-osm_sf4 = osm4 %>% osmdata_sf()
-osm_sf4
+osm_sf = osm %>% osmdata_sf()
+osm_sf
 
-estaciones_de_busM = osm_sf4$osm_points %>% select(osm_id,amenity) 
+estaciones_de_busM = osm_sf$osm_points %>% select(osm_id,amenity) 
 estaciones_de_busM
 
 leaflet() %>% addTiles() %>% addCircleMarkers(data=estaciones_de_busM , col="red") %>% 
@@ -171,10 +243,81 @@ leaflet() %>% addTiles() %>%
   addCircles(data=train_med , col="red" , weight=2) %>% 
   addCircles(data=estaciones_de_busM , col="black" , weight=2)
 
-train_final<-rbind(train_bog,train_med) 
+
+#### Estaciones de policia ####
+osm = opq(bbox = getbb("Medellín Colombia")) %>%
+  add_osm_feature(key="amenity" , value="police") 
+class(osm)
+
+## extraer Simple Features Collection
+osm_sf = osm  %>% osmdata_sf()
+osm_sf
+
+estaciones_policia_med = osm_sf$osm_points %>% select(osm_id,amenity) 
+estaciones_policia_med
+
+### Distancias estaciones de policia ##
+dist_policiasm = st_distance(x=train_med , y=estaciones_policia_med)
+dist_policiasm
+min_dist_policiasm = apply(dist_policiasm , 1 , min)
+min_dist_policiasm
+train_med$min_dist_policiasm<-min_dist_policiasm
+
+leaflet() %>% addTiles() %>% 
+  addCircles(data=estaciones_policia_med , col="black" , weight=2)%>% 
+  addCircles(data=train_med , col="black" , weight=2)
+
+ 
+
+#### Oficinas en Medellin ####
+osm = opq(bbox = getbb("Medellín Colombia")) %>%
+  add_osm_feature(key="building" , value="office") 
+class(osm)
+
+## extraer Simple Features Collection
+osm_sf = osm  %>% osmdata_sf()
+osm_sf
+
+oficinas_med = osm_sf9$osm_points %>% select(osm_id,building) 
+oficinas_med
+
+### Distancias estaciones de policia ##
+dist_oficinasm = st_distance(x=train_med , y=oficinas_med)
+dist_oficinasm
+min_dist_oficinasm = apply(dist_oficinasm , 1 , min)
+min_dist_oficinasm
+train_med$min_dist_oficinasm<-min_dist_oficinasm
+
+leaflet() %>% addTiles() %>% 
+  addCircles(data=oficinas_med , col="black" , weight=2)%>% 
+  addCircles(data=train_med , col="black" , weight=2)
+
+#### colegios en Medellin ####
+osm = opq(bbox = getbb("Medellín Colombia")) %>%
+  add_osm_feature(key="amenity" , value="school") 
+class(osm)
+
+## extraer Simple Features Collection
+osm_sf = osm  %>% osmdata_sf()
+osm_sf
+
+colegios_med = osm_sf$osm_points %>% select(osm_id,amenity) 
+colegios_med
+
+### Distancias colegios en Medellin ##
+dist_colegiosm = st_distance(x=train_med , y=colegios_med)
+dist_colegiosm
+min_dist_colegiosm = apply(dist_colegiosm , 1 , min)
+min_dist_colegiosm
+train_med$min_dist_colegiosm<-min_dist_colegiosm
+
+leaflet() %>% addTiles() %>% 
+  addCircles(data=colegios_med , col="black" , weight=2)%>% 
+  addCircles(data=train_med , col="black" , weight=2)
 
 
-## Hacemos lo mismo para Cali que es el test ##
+
+####### Hacemos lo mismo para Cali que es el test #############
 
 point = geocode_OSM(paste(test$lat[1]," , ",test$lon[1]), as.sf=T) 
 leaflet() %>% addTiles() %>% addCircles(data=point)
@@ -232,6 +375,78 @@ test$min_dist_bus<-min_dist_bus
 leaflet() %>% addTiles() %>% 
   addCircles(data=point , col="red" , weight=2) %>% 
   addCircles(data=estaciones_busC , col="black" , weight=2) 
+
+#### Estaciones de policia ####
+osm = opq(bbox = getbb("Cali Colombia")) %>%
+  add_osm_feature(key="amenity" , value="police") 
+class(osm)
+
+## extraer Simple Features Collection
+osm_sf = osm  %>% osmdata_sf()
+osm_sf
+
+estaciones_policia_cali = osm_sf$osm_points %>% select(osm_id,amenity) 
+estaciones_policia_cali
+
+### Distancias estaciones de policia ##
+dist_policiasc = st_distance(x=test , y=estaciones_policia_cali)
+dist_policiasc
+min_dist_policiasc = apply(dist_policiasc , 1 , min)
+min_dist_policiasc
+test$min_dist_policiasc<-min_dist_policiasc
+
+leaflet() %>% addTiles() %>% 
+  addCircles(data=estaciones_policia_cali , col="black" , weight=2)%>% 
+  addCircles(data=test , col="black" , weight=2)
+
+
+
+#### Oficinas en Cali ####
+osm = opq(bbox = getbb("Cali Colombia")) %>%
+  add_osm_feature(key="building" , value="office") 
+class(osm)
+
+## extraer Simple Features Collection
+osm_sf = osm  %>% osmdata_sf()
+osm_sf
+
+oficinas_cali = osm_sf$osm_points %>% select(osm_id,building) 
+oficinas_cali
+
+### Distancias estaciones de policia ##
+dist_oficinasc = st_distance(x=test , y=oficinas_cali)
+dist_oficinasc
+min_dist_oficinasc = apply(dist_oficinasc , 1 , min)
+min_dist_oficinasc
+test$min_dist_oficinasc<-min_dist_oficinasc
+
+leaflet() %>% addTiles() %>% 
+  addCircles(data=oficinas_cali , col="black" , weight=2)%>% 
+  addCircles(data=test , col="black" , weight=2)
+
+#### colegios en Cali ####
+osm = opq(bbox = getbb("Cali Colombia")) %>%
+  add_osm_feature(key="amenity" , value="school") 
+class(osm)
+
+## extraer Simple Features Collection
+osm_sf = osm  %>% osmdata_sf()
+osm_sf
+
+colegios_cali = osm_sf$osm_points %>% select(osm_id,amenity) 
+colegios_cali
+
+### Distancias colegios en Cali ##
+dist_colegiosc = st_distance(x=test , y=colegios_cali)
+dist_colegiosc
+min_dist_colegiosc = apply(dist_colegiosc , 1 , min)
+min_dist_colegiosc
+test$min_dist_colegiosc<-min_dist_colegiosc
+
+leaflet() %>% addTiles() %>% 
+  addCircles(data=colegios_cali , col="black" , weight=2)%>% 
+  addCircles(data=test , col="black" , weight=2)
+
 
 
 ## Hacemos predicciones para Bogotá ##
@@ -308,7 +523,7 @@ train_bog <- train_bog %>%
     "balcon_terr"),
     .funs = factor)
 
-## Hacemos predicciones para Medellín ##
+#### Hacemos predicciones para Medellín ####
 
 #Predicción a partir de descripción
 table(is.na(train_med$surface_total))
@@ -386,7 +601,7 @@ train_med <- train_med %>%
     "balcon_terr"),
     .funs = factor)
 
-## Predicción para Cali / test ##
+#### Predicción para Cali / test ####
 
 #A partir de descripción
 table(is.na(test$surface_total))
