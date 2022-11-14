@@ -175,7 +175,7 @@ osm_sf
 colegios_bog = osm_sf$osm_points %>% select(osm_id,amenity) 
 colegios_bog
 
-### Distancias oficinas en Bogota ##
+### Distancias colegios en Bogota ##
 dist_colegiosb = st_distance(x=train_bog , y=colegios_bog)
 dist_colegiosb
 min_dist_colegiosb = apply(dist_colegiosb , 1 , min)
