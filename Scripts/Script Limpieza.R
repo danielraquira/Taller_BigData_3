@@ -685,6 +685,7 @@ test <- test %>%
 train_bog <- rename(.data = train_bog, min_dist_policias = min_dist_policiasb, min_dist_colegios = min_dist_colegiosb, min_dist_oficinas = min_dist_oficinasb)
 train_med <- rename(.data = train_med, min_dist_policias = min_dist_policiasm, min_dist_colegios = min_dist_colegiosm, min_dist_oficinas = min_dist_oficinasm)
 
+test <- rename(.data = test, min_dist_policias = min_dist_policiasc, min_dist_colegios = min_dist_colegiosc, min_dist_oficinas = min_dist_oficinasc)
 
 train_final <- rbind(train_bog, train_med)
 
@@ -694,9 +695,9 @@ table(is.na(test$bedrooms))
 table(is.na(test$min_dist_bus))
 table(is.na(test$min_dist_market))
 table(is.na(test$property_type))
-table(is.na(test$min_dist_policiasc))
-table(is.na(test$min_dist_oficinasc))
-table(is.na(test$min_dist_colegiosc))
+table(is.na(test$min_dist_policias))
+table(is.na(test$min_dist_oficinas))
+table(is.na(test$min_dist_colegios))
 table(is.na(test$balcon_terr))
 
 

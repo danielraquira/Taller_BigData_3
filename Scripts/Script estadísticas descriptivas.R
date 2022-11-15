@@ -30,6 +30,7 @@ p_load(pls)
 p_load(tidyr)
 p_load(tibble)
 p_load(gtsummary)
+p_load(skimr)
 
 p_load(tidyverse,rio,
        sf, 
@@ -41,24 +42,26 @@ p_load(tidyverse,rio,
        osmdata,
        here) 
 
+load("datos_limpios.RData")
 
+skim(train_final)
 
-train<- as.data.frame(train)
+train<- as.data.frame(train_final)
 levels(train$balcon_terr) <- c("Sin Balcón o Terraza", "Con Balcón o Terraza")
-summary <- train %>% select(price,13,bedrooms,new_surface,property_type,min_dist_bus,min_dist_market,min_dist_colegios, min_dist_oficinas,min_dist_policias,balcon_terr)
-summary %>% tbl_summary(by=l3,statistic = list(all_continuous() ~ "{mean} ({sd})",
+summary <- train %>% select(price,city,bedrooms,new_surface,property_type,min_dist_bus,min_dist_market,min_dist_colegios, min_dist_oficinas,min_dist_policias,balcon_terr)
+summary %>% tbl_summary(by=city,statistic = list(all_continuous() ~ "{mean} ({sd})",
                                                all_categorical() ~ "{n} / {N} ({p}%)"),
-                        label = list(l3 ~ "Ciudad"
+                        label = list(city ~ "Ciudad"
                         )
                         
 )
 
 test<- as.data.frame(test)
 levels(test$balcon_terr) <- c("Sin Balcón o Terraza", "Con Balcón o Terraza")
-summary <- test %>% select(l3,bedrooms,new_surface,property_type,min_dist_bus,min_dist_market,min_dist_colegios, min_dist_oficinas,min_dist_policias,balcon_terr)
-summary %>% tbl_summary(by=l3,statistic = list(all_continuous() ~ "{mean} ({sd})",
+summary <- test %>% select(city,bedrooms,new_surface,property_type,min_dist_bus,min_dist_market,min_dist_colegios, min_dist_oficinas,min_dist_policias,balcon_terr)
+summary %>% tbl_summary(by=city,statistic = list(all_continuous() ~ "{mean} ({sd})",
                                                all_categorical() ~ "{n} / {N} ({p}%)"),
-                        label = list(l3 ~ "Ciudad")
+                        label = list(city ~ "Ciudad")
                         
 )
 
