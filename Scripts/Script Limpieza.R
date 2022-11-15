@@ -278,7 +278,7 @@ class(osm)
 osm_sf = osm  %>% osmdata_sf()
 osm_sf
 
-oficinas_med = osm_sf9$osm_points %>% select(osm_id,building) 
+oficinas_med = osm_sf$osm_points %>% select(osm_id,building) 
 oficinas_med
 
 ### Distancias estaciones de policia ##
