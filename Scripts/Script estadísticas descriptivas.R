@@ -44,7 +44,6 @@ p_load(tidyverse,rio,
 
 load("datos_limpios.RData")
 
-skim(train_final)
 
 train<- as.data.frame(train_final)
 levels(train$balcon_terr) <- c("Sin Balcón o Terraza", "Con Balcón o Terraza")
