@@ -61,16 +61,31 @@ test <- test %>%
 cor(train$bedrooms, train$new_surface)
 cor(train$bedrooms, train$min_dist_bus)
 cor(train$bedrooms, train$min_dist_market)
+cor(train$bedrooms, train$min_dist_policias)
+cor(train$bedrooms, train$min_dist_oficinas)
+cor(train$bedrooms, train$min_dist_colegios)
 cor(train$new_surface, train$min_dist_bus)
 cor(train$new_surface, train$min_dist_market)
+cor(train$new_surface, train$min_dist_policias)
+cor(train$new_surface, train$min_dist_oficinas)
+cor(train$new_surface, train$min_dist_colegios)
 cor(train$min_dist_bus, train$min_dist_market)
+cor(train$min_dist_bus, train$min_dist_policias)
+cor(train$min_dist_bus, train$min_dist_oficinas)
+cor(train$min_dist_bus, train$min_dist_colegios)
+cor(train$min_dist_market, train$min_dist_policias)
+cor(train$min_dist_market, train$min_dist_oficinas)
+cor(train$min_dist_market, train$min_dist_colegios)
+cor(train$min_dist_policias, train$min_dist_oficinas)
+cor(train$min_dist_policias, train$min_dist_colegios)
+cor(train$min_dist_oficinas, train$min_dist_colegios)
 
 #### Arrancamos con un Modelo Tradicional ####
 
-mod1 <- lm(price ~ bedrooms + new_surface + min_dist_bus + min_dist_market + property_type + balcon_terr + l3, data = train)
+mod1 <- lm(price ~ bedrooms + new_surface + min_dist_bus + min_dist_market + min_dist_policias + min_dist_colegios + min_dist_oficinas + property_type + balcon_terr + l3, data = train)
 summary(mod1)
 
-model1 <- train(price ~ bedrooms + new_surface + min_dist_bus + min_dist_market + property_type + balcon_terr + l3 ,
+model1 <- train(price ~ bedrooms + new_surface + min_dist_bus + min_dist_market + min_dist_policias + min_dist_colegios + min_dist_oficinas + property_type + balcon_terr + l3 ,
                 data = train,
                 trControl = trainControl(method = "cv", number = 5), method = "lm")
 
@@ -98,7 +113,7 @@ predicciones_ols<-as.data.frame(predicciones_test_ols)
 
 ########## Luego, Modelo 2 Ridge Personas #########
 
-x_train <- model.matrix( ~ bedrooms + new_surface + min_dist_bus + min_dist_market + property_type + balcon_terr + l3, data = train)[, -1]
+x_train <- model.matrix( ~ bedrooms + new_surface + min_dist_bus + min_dist_market + min_dist_policias + min_dist_colegios + min_dist_oficinas + property_type + balcon_terr + l3, data = train)[, -1]
 y_train <- train$price
 
 ridge_m2 <- glmnet(
@@ -176,7 +191,7 @@ coeficientes_m2 %>%
   theme(axis.text.x = element_text(size = 6, angle = 45))
 
 ##Predicciones en test
-x.test <- model.matrix( ~ bedrooms + new_surface + min_dist_bus + min_dist_market + property_type + balcon_terr + l3, test)[, -1]
+x.test <- model.matrix( ~ bedrooms + new_surface + min_dist_bus + min_dist_market + min_dist_policias + min_dist_colegios + min_dist_oficinas + property_type + balcon_terr + l3, test)[, -1]
 predict_ridge <- predict(ridgem2_lambda, newx = x.test)
 predict_ridge
 
@@ -266,7 +281,7 @@ predict_lasso
 # MSE de entrenamiento: (valor mse)
 
 ######### Modelo 4 es de Elastic Net #############
-EN_m4 <- train(price ~ bedrooms + new_surface + min_dist_bus + min_dist_market + property_type + balcon_terr + l3, data = train, method = "glmnet",
+EN_m4 <- train(price ~ bedrooms + new_surface + min_dist_bus + min_dist_market + min_dist_policias + min_dist_colegios + min_dist_oficinas + property_type + balcon_terr + l3, data = train, method = "glmnet",
             trControl = trainControl("cv", number = 10), preProcess = c("center", "scale"))
 
 EN_m4 ## alpha = 0.55 and lambda = 900321. (colocafr los nuestros)
@@ -289,14 +304,17 @@ install.packages("VGAM", dependencies = FALSE)
 require("VGAM")
 # set the seed for reproducibility
 set.seed(201914059)
-SuperL_x <- data.frame(train$bedrooms, train$l3, train$new_surface, train$min_dist_bus, train$min_dist_market, train$property_type, train$balcon_terr )
-SuperL_x <- rename(XS, bedrooms =train.bedrooms)
-SuperL_x <- rename(XS, l3 =train.l3)
-SuperL_x <- rename(XS, new_surface =train.new_surface)
-SuperL_x <- rename(XS, min_dist_bus =train.min_dist_bus)
-SuperL_x <- rename(XS, min_dist_market =train.min_dist_market)
-SuperL_x <- rename(XS, property_type =train.property_type)
-SuperL_x <- rename(XS, balcon_terr =train.balcon_terr)
+SuperL_x <- data.frame(train$bedrooms, train$l3, train$new_surface, train$min_dist_bus, train$min_dist_market,train$min_dist_policias, train$min_dist_colegios, train$min_dist_oficinas, train$property_type, train$balcon_terr )
+SuperL_x <- rename(SuperL_xXS, bedrooms =train.bedrooms)
+SuperL_x <- rename(SuperL_x, l3 =train.l3)
+SuperL_x <- rename(SuperL_x, new_surface =train.new_surface)
+SuperL_x <- rename(SuperL_x, min_dist_bus =train.min_dist_bus)
+SuperL_x <- rename(SuperL_x, min_dist_market =train.min_dist_market)
+SuperL_x <- rename(SuperL_x, min_dist_policias =train.min_dist_policias)
+SuperL_x <- rename(SuperL_x, min_dist_colegios =train.min_dist_colegios)
+SuperL_x <- rename(SuperL_x, min_dist_oficinas =train.min_dist_oficinas)
+SuperL_x <- rename(SuperL_x, property_type =train.property_type)
+SuperL_x <- rename(SuperL_x, balcon_terr =train.balcon_terr)
 
 SuperL_y <- train$price
 
@@ -325,22 +343,20 @@ SL_responses <- data.frame(SuperL_x, SuperL_yy)
 #Superlearner MSE:1.612468e+17
 #### Verificar nuestros datos
 SuperL_x
-SuperL_x_test <- data.frame(test$bedrooms, test$l3, test$new_surface, test$min_dist_bus, test$min_dist_market, test$property_type, test$balcon_terr )
+SuperL_x_test <- data.frame(test$bedrooms, test$l3, test$new_surface, test$min_dist_bus, test$min_dist_market,test$min_dist_policias,test$min_dist_colegios,test$min_dist_oficinas, test$property_type, test$balcon_terr )
 SuperL_x_test<-rename(SuperL_x_test, bedrooms =test.bedrooms)
 SuperL_x_test<-rename(SuperL_x_test, l3 =test.l3)
 SuperL_x_test<-rename(SuperL_x_test, new_surface =test.new_surface)
 SuperL_x_test<-rename(SuperL_x_test, min_dist_bus =test.min_dist_bus)
 SuperL_x_test<-rename(SuperL_x_test, min_dist_market =test.min_dist_market)
+SuperL_x_test<-rename(SuperL_x_test, min_dist_policias =test.min_dist_policias)
+SuperL_x_test<-rename(SuperL_x_test, min_dist_colegios =test.min_dist_colegios)
+SuperL_x_test<-rename(SuperL_x_test, min_dist_oficinas =test.min_dist_oficinas)
 SuperL_x_test<-rename(SuperL_x_test, property_type =test.property_type)
 SuperL_x_test<-rename(SuperL_x_test, balcon_terr =test.balcon_terr)
 
 str(SuperL_x_test)
-################  PARECE QUE SE REPITE  ###################
-# Now predict the outcome for all possible x
-predict_test <- predict(fitY, newdata = data.frame(XS_test),onlySL = T)$pred
-# Create a dataframe of all x and predicted SL responses
-Dl1 <- data.frame(XS_test, price_test)
-############################################################33
+
 #Estadisticas descriptivas del precio predicho
 summary(SL_responses$predict_test)
 
