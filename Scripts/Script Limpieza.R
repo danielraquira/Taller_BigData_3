@@ -447,7 +447,7 @@ leaflet() %>% addTiles() %>%
   addCircles(data=colegios_cali , col="black" , weight=2)%>% 
   addCircles(data=test , col="black" , weight=2)
 
-
+save(train, train_bog, train_med, test, file = "datos_preBuffer.RData")
 
 ## Hacemos predicciones para Bogotá ##
 
@@ -462,8 +462,8 @@ table(is.na(train_bog$new_surface))
 
 train_bog = train_bog %>% mutate(new_desc=str_to_lower(description))
 
-p1 = "[:space:]+[:digit:]{2,3}+[:punct:]+[:digit:]{1,2}+[:space:]+m" ## pattern
-p2 = "[:space:]+[:digit:]{2,3}+[:punct:]+[:digit:]{1,2}+[:space:]+m2" ## pattern
+p1 = "[:space:]+[:digit:]{2,3}+[:punct:]+[:digit:]{1,2}+[:space:]+m"
+p2 = "[:space:]+[:digit:]{2,3}+[:punct:]+[:digit:]{1,2}+[:space:]+m2" 
 
 train_bog$new_surface2<-NA
 
@@ -485,7 +485,7 @@ table(is.na(train_bog$new_surface))
 # buffer
 house_buf<-NULL
 house_buf_mean<-NULL
-house_buf = st_buffer(train_bog,dist=100)
+house_buf = st_buffer(train_bog,dist=50)
 house_buf = st_join(house_buf,train_bog[,"new_surface"])
 st_geometry(house_buf) = NULL
 house_buf_mean = house_buf %>% group_by(property_id) %>% summarise(surface_new_3=mean(new_surface.y,na.rm=T))
@@ -522,6 +522,8 @@ train_bog <- train_bog %>%
   mutate_at(.vars = c(
     "balcon_terr"),
     .funs = factor)
+
+
 
 #### Hacemos predicciones para Medellín ####
 
@@ -678,25 +680,37 @@ test <- test %>%
     "balcon_terr"),
     .funs = factor)
 
+
+
+train_bog <- rename(.data = train_bog, min_dist_policias = min_dist_policiasb, min_dist_colegios = min_dist_colegiosb, min_dist_oficinas = min_dist_oficinasb)
+train_med <- rename(.data = train_med, min_dist_policias = min_dist_policiasm, min_dist_colegios = min_dist_colegiosm, min_dist_oficinas = min_dist_oficinasm)
+
+
+train_final <- rbind(train_bog, train_med)
+
 ## Revisamos NA´s ##
 table(is.na(test$new_surface))
 table(is.na(test$bedrooms))
 table(is.na(test$min_dist_bus))
 table(is.na(test$min_dist_market))
 table(is.na(test$property_type))
-table(is.na(train_bog$new_surface))
-table(is.na(train_bog$bedrooms))
-table(is.na(train_bog$min_dist_bus))
-table(is.na(train_bog$min_dist_market))
-table(is.na(train_bog$property_type))
-table(is.na(train_bog$price))
-table(is.na(train_med$new_surface))
-table(is.na(train_med$bedrooms))
-table(is.na(train_med$min_dist_bus))
-table(is.na(train_med$min_dist_market))
-table(is.na(train_med$property_type))
-table(is.na(train_med$price))
+table(is.na(test$min_dist_policiasc))
+table(is.na(test$min_dist_oficinasc))
+table(is.na(test$min_dist_colegiosc))
+table(is.na(test$balcon_terr))
 
-train_final <- rbind(train_bog, train_med)
+
+
+table(is.na(train_final$new_surface))
+table(is.na(train_final$bedrooms))
+table(is.na(train_final$min_dist_bus))
+table(is.na(train_final$min_dist_market))
+table(is.na(train_final$property_type))
+table(is.na(train_final$price))
+table(is.na(train_final$min_dist_colegios))
+table(is.na(train_final$min_dist_policias))
+table(is.na(train_final$min_dist_oficinas))
+table(is.na(train_final$balcon_terr))
+
 
 save(train_bog, train_med, train_final, test, file = "datos_limpios.RData")
