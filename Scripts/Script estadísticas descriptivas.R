@@ -45,7 +45,7 @@ p_load(tidyverse,rio,
 
 train<- as.data.frame(train)
 levels(train$balcon_terr) <- c("Sin Balcón o Terraza", "Con Balcón o Terraza")
-summary <- train %>% select(price,l3,bedrooms,new_surface,property_type,min_dist_bus,min_dist_market,balcon_terr)
+summary <- train %>% select(price,13,bedrooms,new_surface,property_type,min_dist_bus,min_dist_market,min_dist_colegios, min_dist_oficinas,min_dist_policias,balcon_terr)
 summary %>% tbl_summary(by=l3,statistic = list(all_continuous() ~ "{mean} ({sd})",
                                                all_categorical() ~ "{n} / {N} ({p}%)"),
                         label = list(l3 ~ "Ciudad"
@@ -55,7 +55,7 @@ summary %>% tbl_summary(by=l3,statistic = list(all_continuous() ~ "{mean} ({sd})
 
 test<- as.data.frame(test)
 levels(test$balcon_terr) <- c("Sin Balcón o Terraza", "Con Balcón o Terraza")
-summary <- test %>% select(l3,bedrooms,new_surface,property_type,min_dist_bus,min_dist_market,balcon_terr)
+summary <- test %>% select(l3,bedrooms,new_surface,property_type,min_dist_bus,min_dist_market,min_dist_colegios, min_dist_oficinas,min_dist_policias,balcon_terr)
 summary %>% tbl_summary(by=l3,statistic = list(all_continuous() ~ "{mean} ({sd})",
                                                all_categorical() ~ "{n} / {N} ({p}%)"),
                         label = list(l3 ~ "Ciudad")
