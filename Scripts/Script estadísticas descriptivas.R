@@ -44,7 +44,7 @@ p_load(tidyverse,rio,
 
 load("datos_limpios.RData")
 
-
+  
 train<- as.data.frame(train_final)
 levels(train$balcon_terr) <- c("Sin Balcón o Terraza", "Con Balcón o Terraza")
 summary <- train %>% select(price,city,bedrooms,new_surface,property_type,min_dist_bus,min_dist_market,min_dist_colegios, min_dist_oficinas,min_dist_policias,balcon_terr)

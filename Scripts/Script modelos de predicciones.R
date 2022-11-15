@@ -46,15 +46,9 @@ p_load(tidyr)
 p_load(tibble)
 p_load(gtsummary)
 
-train <- train %>%
-  mutate_at(.vars = c(
-    "property_type","operation_type","l3"),
-    .funs = factor)
+load("datos_limpios.RData")
 
-test <- test %>%
-  mutate_at(.vars = c(
-    "property_type","operation_type","l3"),
-    .funs = factor)
+train<- as.data.frame(train_final)
 
 ## Para evitar problemas de correlación y ver como se comportan las variables
 
@@ -82,16 +76,16 @@ cor(train$min_dist_oficinas, train$min_dist_colegios)
 
 #### Arrancamos con un Modelo Tradicional ####
 
-mod1 <- lm(price ~ bedrooms + new_surface + min_dist_bus + min_dist_market + min_dist_policias + min_dist_colegios + min_dist_oficinas + property_type + balcon_terr + l3, data = train)
+mod1 <- lm(price ~ bedrooms + new_surface + min_dist_bus + min_dist_market + min_dist_policias + min_dist_colegios + min_dist_oficinas + property_type + balcon_terr, data = train)
 summary(mod1)
 
-model1 <- train(price ~ bedrooms + new_surface + min_dist_bus + min_dist_market + min_dist_policias + min_dist_colegios + min_dist_oficinas + property_type + balcon_terr + l3 ,
+model1 <- train(price ~ bedrooms + new_surface + min_dist_bus + min_dist_market + min_dist_policias + min_dist_colegios + min_dist_oficinas + property_type + balcon_terr,
                 data = train,
                 trControl = trainControl(method = "cv", number = 5), method = "lm")
 
 model1 
-549026780^2
-##MSE (anotar valor que nos de)
+784106100^2
+##MSE (6.148224e+17)
 
 ##Coeficientes modelo 1 tradicional
 coeficientes_m1 <- mod1$coefficients %>%
@@ -113,7 +107,7 @@ predicciones_ols<-as.data.frame(predicciones_test_ols)
 
 ########## Luego, Modelo 2 Ridge Personas #########
 
-x_train <- model.matrix( ~ bedrooms + new_surface + min_dist_bus + min_dist_market + min_dist_policias + min_dist_colegios + min_dist_oficinas + property_type + balcon_terr + l3, data = train)[, -1]
+x_train <- model.matrix( ~ bedrooms + new_surface + min_dist_bus + min_dist_market + min_dist_policias + min_dist_colegios + min_dist_oficinas + property_type + balcon_terr, data = train)[, -1]
 y_train <- train$price
 
 ridge_m2 <- glmnet(
@@ -190,12 +184,14 @@ coeficientes_m2 %>%
   theme_bw() +
   theme(axis.text.x = element_text(size = 6, angle = 45))
 
-##Predicciones en test
-x.test <- model.matrix( ~ bedrooms + new_surface + min_dist_bus + min_dist_market + min_dist_policias + min_dist_colegios + min_dist_oficinas + property_type + balcon_terr + l3, test)[, -1]
-predict_ridge <- predict(ridgem2_lambda, newx = x.test)
+##Predicciones en train
+x.train <- model.matrix( ~ bedrooms + new_surface + min_dist_bus + min_dist_market + min_dist_policias + min_dist_colegios + min_dist_oficinas + property_type + balcon_terr, train)[, -1]
+predict_ridge <- predict(ridgem2_lambda, newx = x.train)
 predict_ridge
 
-#MSE del ridge: (valor que nos de )
+mse_ridge <- mean((predict_ridge - y_train)^2)
+paste("Error (mse):", mse_ridge)
+#MSE del ridge:614787756284845440
 
 ##############el Modelo 3 es Lasso #########################
 
@@ -276,19 +272,21 @@ coeficientes_m3 %>%
   theme(axis.text.x = element_text(size = 6, angle = 45))
 
 # Predicciones en train
-predict_lasso <- predict(model_lasso_min, newx = x.test)
+predict_lasso <- predict(lassom3_lambda, newx = x_train)
 predict_lasso
-# MSE de entrenamiento: (valor mse)
+training_mse <- mean((predict_lasso - y_train)^2)
+paste("Error (mse) de entrenamiento:", training_mse)
+# MSE de entrenamiento: (614741449041869952)
 
 ######### Modelo 4 es de Elastic Net #############
-EN_m4 <- train(price ~ bedrooms + new_surface + min_dist_bus + min_dist_market + min_dist_policias + min_dist_colegios + min_dist_oficinas + property_type + balcon_terr + l3, data = train, method = "glmnet",
+EN_m4 <- train(price ~ bedrooms + new_surface + min_dist_bus + min_dist_market + min_dist_policias + min_dist_colegios + min_dist_oficinas + property_type + balcon_terr, data = train, method = "glmnet",
             trControl = trainControl("cv", number = 10), preProcess = c("center", "scale"))
 
-EN_m4 ## alpha = 0.55 and lambda = 900321. (colocafr los nuestros)
+EN_m4 ## alpha = 1 and lambda = 323074.5
 
-## RMSE= 548747488 (colocar los nuestros)
-548747488^2
-##MSE= (colocar mse)
+## RMSE= 784053899 
+784053899 ^2
+##MSE= 6.147405e+17
 
 # Predicción EN
 predict_m4 <- predict(el, test)
@@ -303,10 +301,9 @@ require("SuperLearner")
 install.packages("VGAM", dependencies = FALSE)
 require("VGAM")
 # set the seed for reproducibility
-set.seed(201914059)
-SuperL_x <- data.frame(train$bedrooms, train$l3, train$new_surface, train$min_dist_bus, train$min_dist_market,train$min_dist_policias, train$min_dist_colegios, train$min_dist_oficinas, train$property_type, train$balcon_terr )
-SuperL_x <- rename(SuperL_xXS, bedrooms =train.bedrooms)
-SuperL_x <- rename(SuperL_x, l3 =train.l3)
+set.seed(201911587)
+SuperL_x <- data.frame(train$bedrooms, train$new_surface, train$min_dist_bus, train$min_dist_market,train$min_dist_policias, train$min_dist_colegios, train$min_dist_oficinas, train$property_type, train$balcon_terr)
+SuperL_x <- rename(SuperL_x, bedrooms =train.bedrooms)
 SuperL_x <- rename(SuperL_x, new_surface =train.new_surface)
 SuperL_x <- rename(SuperL_x, min_dist_bus =train.min_dist_bus)
 SuperL_x <- rename(SuperL_x, min_dist_market =train.min_dist_market)
@@ -326,7 +323,7 @@ Y_fit <- SuperLearner(Y = SuperL_y, X = SuperL_x,
                      method = "method.NNLS", SL.library = c("SL.mean","SL.lm", "SL.ranger", "SL.glmnet"),
                      cvControl = list(V = folds))
 
-Y_fit ## Nos dice que el mejor mode es ranger_All MSE: 1.612468e+17 --ver que nos de lo mismo
+Y_fit ## Nos dice que el mejor mode es ranger_All MSE: 2.537410e+17
 
 # Para toda x, predecir el outcome
 SuperL_yy <- predict(Y_fit, newdata = data.frame(SuperL_x),onlySL = T)$pred
@@ -336,16 +333,15 @@ SL_responses <- data.frame(SuperL_x, SuperL_yy)
 
 #RMSE de todos los modelos realizados en el train, esto nos dice que el de menor MSE
 #es el Superlearner
-#OLS MSE:3.014304e+17
-#Ridge MSE 3.023e+17
-#Lasso 3.014e+17
-#Elastic Net MSE=3.011238e+17
-#Superlearner MSE:1.612468e+17
+#OLS MSE:6.1482e+17
+#Ridge MSE 6.1478e+17
+#Lasso 6.1474e+17
+#Elastic Net MSE=6.1474e+17
+#Superlearner MSE:2.5374e+17
 #### Verificar nuestros datos
 SuperL_x
-SuperL_x_test <- data.frame(test$bedrooms, test$l3, test$new_surface, test$min_dist_bus, test$min_dist_market,test$min_dist_policias,test$min_dist_colegios,test$min_dist_oficinas, test$property_type, test$balcon_terr )
+SuperL_x_test <- data.frame(test$bedrooms, test$new_surface, test$min_dist_bus, test$min_dist_market,test$min_dist_policias,test$min_dist_colegios,test$min_dist_oficinas, test$property_type, test$balcon_terr )
 SuperL_x_test<-rename(SuperL_x_test, bedrooms =test.bedrooms)
-SuperL_x_test<-rename(SuperL_x_test, l3 =test.l3)
 SuperL_x_test<-rename(SuperL_x_test, new_surface =test.new_surface)
 SuperL_x_test<-rename(SuperL_x_test, min_dist_bus =test.min_dist_bus)
 SuperL_x_test<-rename(SuperL_x_test, min_dist_market =test.min_dist_market)
@@ -357,14 +353,17 @@ SuperL_x_test<-rename(SuperL_x_test, balcon_terr =test.balcon_terr)
 
 str(SuperL_x_test)
 
+#Predicción
+price_predict <- predict(Y_fit, newdata = data.frame(SuperL_x_test), onlySL = T)$pred
+
+Sub <- data.frame(SuperL_x_test, price_predict)
+
+
 #Estadisticas descriptivas del precio predicho
-summary(SL_responses$predict_test)
+summary(Sub$price_predict)
 
-
-################## Bigotes para views ########################
-bwplot(predict_test ~ l3 , data = SL_responses)
 
 #Submission file
-submission<-data.frame(test$property_id,SL_responses$predict_test)
-write.csv(submission,"dirección para nuevo archivo, tenemos uno en store", row.names = FALSE)
+submission<-data.frame(test$property_id,Sub$price_predict)
+write.csv(submission,"C:/Users/Santiago Becerra/Desktop/Santiago/Andes/Materias y Trabajos/Octavo Semestre/Big Data/Problem set 3/Taller_BigData_3/resultado_prediccion.cvs", row.names = FALSE)
 
